@@ -2,7 +2,12 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Lift Log">
+<meta name="theme-color" content="#121316">
 <title>Lift Log</title>
 <style>
   :root {
@@ -18,20 +23,22 @@
     --good: #4cd97b;
   }
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; overscroll-behavior-y: none; }
   body {
     margin: 0;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     background: var(--bg);
     color: var(--text);
-    padding-bottom: 90px;
+    padding-bottom: calc(84px + env(safe-area-inset-bottom));
   }
+  body.sheet-open { overflow: hidden; }
   header {
     position: sticky;
     top: 0;
     z-index: 20;
     background: var(--bg);
     border-bottom: 1px solid var(--border);
-    padding: 10px 12px;
+    padding: calc(10px + env(safe-area-inset-top)) 12px 10px;
   }
   .date-row {
     display: flex;
@@ -44,7 +51,7 @@
     color: var(--text);
     border: 1px solid var(--border);
     border-radius: 10px;
-    padding: 10px;
+    padding: 12px 10px;
     font-size: 16px;
   }
   .icon-btn {
@@ -52,12 +59,13 @@
     border: 1px solid var(--border);
     color: var(--text);
     border-radius: 10px;
-    width: 42px;
-    height: 42px;
+    width: 44px;
+    height: 44px;
     font-size: 18px;
     display: flex;
     align-items: center;
     justify-content: center;
+    flex-shrink: 0;
   }
   .icon-btn:active { background: var(--card2); }
   h1 {
@@ -68,7 +76,7 @@
   }
   .tabs {
     position: sticky;
-    top: 62px;
+    top: 66px;
     z-index: 19;
     display: flex;
     gap: 6px;
@@ -78,7 +86,7 @@
   .tab {
     flex: 1;
     text-align: center;
-    padding: 10px 4px;
+    padding: 12px 4px;
     border-radius: 10px;
     background: var(--card);
     border: 1px solid var(--border);
@@ -109,18 +117,35 @@
     align-items: center;
     padding: 12px 14px;
   }
+  .exercise-headcol {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    min-width: 0;
+    flex: 1;
+    margin-right: 10px;
+  }
   .exercise-name {
     font-weight: 700;
     font-size: 15px;
+  }
+  .exercise-last {
+    font-size: 11.5px;
+    color: var(--muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
   .add-set-btn {
     background: var(--accent);
     color: #0b1220;
     border: none;
     border-radius: 8px;
-    padding: 8px 12px;
+    padding: 10px 14px;
     font-weight: 700;
     font-size: 13px;
+    min-height: 40px;
+    flex-shrink: 0;
   }
   .add-set-btn:active { opacity: 0.8; }
 
@@ -128,8 +153,15 @@
     display: flex;
     align-items: center;
     gap: 8px;
-    padding: 8px 14px;
+    padding: 4px 6px 4px 14px;
     border-top: 1px solid var(--border);
+  }
+  .set-row .set-tap {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 0;
   }
   .set-num {
     width: 22px;
@@ -138,38 +170,19 @@
     font-weight: 700;
     flex-shrink: 0;
   }
-  .field {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-  }
-  .field label {
-    font-size: 10px;
-    color: var(--muted);
-    text-transform: uppercase;
-    letter-spacing: 0.4px;
-  }
-  .field input {
-    width: 100%;
-    background: var(--card2);
-    border: 1px solid var(--border);
-    color: var(--text);
-    border-radius: 8px;
-    padding: 8px 6px;
+  .set-summary {
     font-size: 15px;
-    text-align: center;
+    font-weight: 600;
   }
-  .field input:focus { outline: none; border-color: var(--accent); }
   .del-set {
     flex-shrink: 0;
-    width: 30px;
-    height: 30px;
-    border-radius: 8px;
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
     background: transparent;
-    border: 1px solid var(--border);
+    border: none;
     color: var(--danger);
-    font-size: 16px;
+    font-size: 17px;
     line-height: 1;
   }
   .empty-hint {
@@ -195,8 +208,8 @@
   }
   .shot-thumb {
     position: relative;
-    width: 64px;
-    height: 64px;
+    width: 68px;
+    height: 68px;
     border-radius: 10px;
     overflow: hidden;
     border: 1px solid var(--border);
@@ -209,25 +222,25 @@
   }
   .shot-thumb .x {
     position: absolute;
-    top: 2px;
-    right: 2px;
-    background: rgba(0,0,0,0.6);
+    top: 0;
+    right: 0;
+    background: rgba(0,0,0,0.65);
     color: #fff;
     border: none;
-    border-radius: 6px;
-    width: 18px;
-    height: 18px;
-    font-size: 11px;
+    border-radius: 0 0 0 10px;
+    width: 26px;
+    height: 26px;
+    font-size: 13px;
     line-height: 1;
   }
   .add-shot {
-    width: 64px;
-    height: 64px;
+    width: 68px;
+    height: 68px;
     border-radius: 10px;
     border: 1px dashed var(--border);
     background: var(--card);
     color: var(--muted);
-    font-size: 22px;
+    font-size: 24px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -265,14 +278,10 @@
     border: 1px solid var(--border);
     color: var(--text);
     border-radius: 10px;
-    padding: 10px;
-    font-size: 13px;
+    padding: 12px;
+    font-size: 14px;
     font-weight: 600;
-  }
-  .bottom-nav button.primary {
-    background: var(--accent);
-    color: #0b1220;
-    border-color: var(--accent);
+    min-height: 44px;
   }
 
   .history-panel {
@@ -281,7 +290,7 @@
     inset: 0;
     background: var(--bg);
     z-index: 50;
-    padding: 12px;
+    padding: calc(12px + env(safe-area-inset-top)) 12px 12px;
     overflow-y: auto;
   }
   .history-panel.open { display: block; }
@@ -315,21 +324,23 @@
     color: #0b1220;
     border: none;
     border-radius: 8px;
-    padding: 8px 12px;
+    padding: 10px 14px;
     font-weight: 700;
     font-size: 13px;
+    min-height: 40px;
   }
   .close-btn {
     background: var(--card2);
     border: 1px solid var(--border);
     color: var(--text);
     border-radius: 10px;
-    padding: 8px 14px;
+    padding: 10px 16px;
     font-weight: 600;
+    min-height: 40px;
   }
   .toast {
     position: fixed;
-    bottom: 76px;
+    bottom: calc(76px + env(safe-area-inset-bottom));
     left: 50%;
     transform: translateX(-50%);
     background: var(--good);
@@ -344,6 +355,158 @@
     z-index: 200;
   }
   .toast.show { opacity: 1; }
+
+  /* ---- Wheel-picker sheet ---- */
+  .sheet-backdrop {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.55);
+    z-index: 199;
+  }
+  .sheet-backdrop.open { display: block; }
+  .sheet {
+    display: none;
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 200;
+    background: var(--card);
+    border-top: 1px solid var(--border);
+    border-radius: 18px 18px 0 0;
+    padding: 10px 14px calc(20px + env(safe-area-inset-bottom));
+    box-shadow: 0 -8px 30px rgba(0,0,0,0.5);
+  }
+  .sheet.open { display: block; }
+  .sheet-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 6px 0 4px;
+  }
+  .sheet-titles { text-align: center; flex: 1; }
+  .sheet-title {
+    font-size: 15px;
+    font-weight: 700;
+  }
+  .sheet-subtitle {
+    font-size: 12px;
+    color: var(--muted);
+    margin-top: 1px;
+  }
+  .sheet-last {
+    font-size: 12px;
+    color: var(--accent2);
+    margin-top: 3px;
+  }
+  .sheet-close {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: var(--card2);
+    border: none;
+    color: var(--muted);
+    font-size: 15px;
+  }
+  .sheet-close.spacer { visibility: hidden; }
+
+  .wheels-row {
+    position: relative;
+    display: flex;
+    gap: 4px;
+    margin: 8px 0 4px;
+  }
+  .wheel-highlight {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    height: 40px;
+    background: rgba(255,255,255,0.05);
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    pointer-events: none;
+    border-radius: 8px;
+  }
+  .wheel-col {
+    flex: 1;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  .wheel-label {
+    font-size: 10.5px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 4px;
+  }
+  .wheel-scroll {
+    position: relative;
+    width: 100%;
+    height: 150px;
+    overflow-y: scroll;
+    scroll-snap-type: y mandatory;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .wheel-scroll::-webkit-scrollbar { display: none; }
+  .wheel-item {
+    height: 40px;
+    line-height: 40px;
+    text-align: center;
+    font-size: 19px;
+    color: var(--muted);
+    scroll-snap-align: center;
+  }
+  .wheel-item.active {
+    color: var(--text);
+    font-weight: 700;
+    font-size: 23px;
+  }
+  .wheel-fade {
+    position: absolute;
+    left: 0;
+    right: 0;
+    height: 55px;
+    pointer-events: none;
+    z-index: 2;
+  }
+  .wheel-fade.top {
+    top: 0;
+    background: linear-gradient(var(--card), rgba(28,30,35,0));
+  }
+  .wheel-fade.bottom {
+    bottom: 0;
+    background: linear-gradient(rgba(28,30,35,0), var(--card));
+  }
+
+  .sheet-save-btn {
+    width: 100%;
+    background: var(--accent);
+    color: #0b1220;
+    border: none;
+    border-radius: 12px;
+    padding: 15px;
+    font-size: 16px;
+    font-weight: 700;
+    margin-top: 10px;
+    min-height: 50px;
+  }
+  .sheet-save-btn:active { opacity: 0.85; }
+  .sheet-delete-btn {
+    width: 100%;
+    background: transparent;
+    border: none;
+    color: var(--danger);
+    font-size: 14px;
+    font-weight: 600;
+    padding: 12px;
+    margin-top: 2px;
+  }
 </style>
 </head>
 <body>
@@ -394,6 +557,24 @@
   <div id="historyList"></div>
 </div>
 
+<div class="sheet-backdrop" id="sheetBackdrop"></div>
+<div class="sheet" id="sheet">
+  <div class="sheet-header">
+    <button class="sheet-close spacer">&#10005;</button>
+    <div class="sheet-titles">
+      <div class="sheet-title" id="sheetTitle">Exercise</div>
+      <div class="sheet-subtitle" id="sheetSubtitle">Set 1</div>
+      <div class="sheet-last" id="sheetLast"></div>
+    </div>
+    <button class="sheet-close" id="sheetClose">&#10005;</button>
+  </div>
+  <div class="wheels-row" id="wheelsRow">
+    <div class="wheel-highlight"></div>
+  </div>
+  <button class="sheet-save-btn" id="sheetSave">Add Set</button>
+  <button class="sheet-delete-btn" id="sheetDelete" style="display:none;">Delete Set</button>
+</div>
+
 <div class="toast" id="toast">Saved</div>
 
 <script>
@@ -426,16 +607,43 @@
     ]
   };
 
+  // Each field carries its wheel range so the sheet can build a scroll wheel for it.
   var FIELDS = {
-    reps_weight: [ { key: "reps", label: "Reps" }, { key: "weight", label: "Weight (lb)" } ],
-    reps_height: [ { key: "reps", label: "Reps" }, { key: "height", label: "Height (in)" } ],
-    time: [ { key: "min", label: "Min" }, { key: "sec", label: "Sec" } ],
-    count: [ { key: "count", label: "Count" } ]
+    reps_weight: [
+      { key: "reps", label: "Reps", min: 0, max: 50, step: 1 },
+      { key: "weight", label: "Weight (lb)", min: 0, max: 500, step: 5 }
+    ],
+    reps_height: [
+      { key: "reps", label: "Reps", min: 0, max: 50, step: 1 },
+      { key: "height", label: "Height (in)", min: 0, max: 60, step: 1 }
+    ],
+    time: [
+      { key: "min", label: "Min", min: 0, max: 30, step: 1 },
+      { key: "sec", label: "Sec", min: 0, max: 59, step: 1 }
+    ],
+    count: [
+      { key: "count", label: "Count", min: 0, max: 100, step: 1 }
+    ]
+  };
+
+  var DEFAULTS = {
+    reps_weight: { reps: 8, weight: 45 },
+    reps_height: { reps: 5, height: 24 },
+    time: { min: 1, sec: 0 },
+    count: { count: 10 }
+  };
+
+  var UNIT_SUFFIX = {
+    reps_weight: " lb",
+    reps_height: " in",
+    time: " min",
+    count: " reps"
   };
 
   var db = null;
   var current = null; // in-memory record for the selected date
   var activeCat = "LIFTS";
+  var lastSessions = {}; // exercise name -> { date, sets }
 
   function pad(n) { return n < 10 ? "0" + n : "" + n; }
   function todayStr() {
@@ -517,9 +725,56 @@
     setTimeout(function () { t.classList.remove("show"); }, 700);
   }
 
-  function fieldValue(setObj, key) {
-    var v = setObj[key];
-    return (v === undefined || v === null) ? "" : v;
+  function formatSet(type, s) {
+    if (type === "reps_weight") return s.reps + " reps × " + s.weight + " lb";
+    if (type === "reps_height") return s.reps + " reps × " + s.height + " in";
+    if (type === "time") return (s.min || 0) + ":" + pad(s.sec || 0) + " min";
+    return s.count + " reps";
+  }
+
+  function formatSetCompact(type, s) {
+    if (type === "reps_weight") return s.reps + "×" + s.weight;
+    if (type === "reps_height") return s.reps + "×" + s.height;
+    if (type === "time") return (s.min || 0) + ":" + pad(s.sec || 0);
+    return String(s.count);
+  }
+
+  function daysAgoLabel(dateStr, refStr) {
+    var a = dateStr.split("-").map(Number);
+    var b = refStr.split("-").map(Number);
+    var d1 = new Date(a[0], a[1] - 1, a[2]);
+    var d2 = new Date(b[0], b[1] - 1, b[2]);
+    var diff = Math.round((d2 - d1) / 86400000);
+    if (diff === 1) return "yesterday";
+    if (diff > 1) return diff + " days ago";
+    return prettyDate(dateStr);
+  }
+
+  function lastSessionLine(ex) {
+    var last = lastSessions[ex.name];
+    if (!last) return "";
+    var summary = last.sets.map(function (s) { return formatSetCompact(ex.type, s); }).join(", ");
+    return "Last (" + daysAgoLabel(last.date, current.date) + "): " + summary + UNIT_SUFFIX[ex.type];
+  }
+
+  function computeLastSessions(beforeDate) {
+    return getAllWorkouts().then(function (all) {
+      var prior = all.filter(function (r) { return r.date < beforeDate; })
+        .sort(function (a, b) { return a.date < b.date ? 1 : -1; }); // most recent first
+      var map = {};
+      Object.keys(EXERCISES).forEach(function (cat) {
+        EXERCISES[cat].forEach(function (ex) {
+          for (var i = 0; i < prior.length; i++) {
+            var sets = prior[i].exercises && prior[i].exercises[ex.name];
+            if (sets && sets.length) {
+              map[ex.name] = { date: prior[i].date, sets: sets };
+              break;
+            }
+          }
+        });
+      });
+      return map;
+    });
   }
 
   function renderSection(cat) {
@@ -531,14 +786,24 @@
 
       var head = document.createElement("div");
       head.className = "exercise-head";
+      var headCol = document.createElement("div");
+      headCol.className = "exercise-headcol";
       var nameEl = document.createElement("div");
       nameEl.className = "exercise-name";
       nameEl.textContent = ex.name;
+      headCol.appendChild(nameEl);
+      var lastLine = lastSessionLine(ex);
+      if (lastLine) {
+        var lastEl = document.createElement("div");
+        lastEl.className = "exercise-last";
+        lastEl.textContent = lastLine;
+        headCol.appendChild(lastEl);
+      }
       var addBtn = document.createElement("button");
       addBtn.className = "add-set-btn";
       addBtn.textContent = "+ Add Set";
-      addBtn.addEventListener("click", function () { addSet(cat, ex); });
-      head.appendChild(nameEl);
+      addBtn.addEventListener("click", function () { openSheet(ex, "add", null); });
+      head.appendChild(headCol);
       head.appendChild(addBtn);
       card.appendChild(head);
 
@@ -562,35 +827,24 @@
     var row = document.createElement("div");
     row.className = "set-row";
 
+    var tap = document.createElement("div");
+    tap.className = "set-tap";
     var num = document.createElement("div");
     num.className = "set-num";
     num.textContent = "#" + (idx + 1);
-    row.appendChild(num);
-
-    FIELDS[ex.type].forEach(function (f) {
-      var field = document.createElement("div");
-      field.className = "field";
-      var label = document.createElement("label");
-      label.textContent = f.label;
-      var input = document.createElement("input");
-      input.type = "number";
-      input.inputMode = "decimal";
-      input.min = "0";
-      input.value = fieldValue(setObj, f.key);
-      input.addEventListener("input", function () {
-        var val = input.value === "" ? "" : Number(input.value);
-        current.exercises[ex.name][idx][f.key] = val;
-        scheduleSave();
-      });
-      field.appendChild(label);
-      field.appendChild(input);
-      row.appendChild(field);
-    });
+    var summary = document.createElement("div");
+    summary.className = "set-summary";
+    summary.textContent = formatSet(ex.type, setObj);
+    tap.appendChild(num);
+    tap.appendChild(summary);
+    tap.addEventListener("click", function () { openSheet(ex, "edit", idx); });
+    row.appendChild(tap);
 
     var del = document.createElement("button");
     del.className = "del-set";
     del.textContent = "✕";
-    del.addEventListener("click", function () {
+    del.addEventListener("click", function (e) {
+      e.stopPropagation();
       current.exercises[ex.name].splice(idx, 1);
       scheduleSave();
       renderSection(activeCat);
@@ -598,15 +852,6 @@
     row.appendChild(del);
 
     return row;
-  }
-
-  function addSet(cat, ex) {
-    if (!current.exercises[ex.name]) current.exercises[ex.name] = [];
-    var blank = {};
-    FIELDS[ex.type].forEach(function (f) { blank[f.key] = ""; });
-    current.exercises[ex.name].push(blank);
-    scheduleSave();
-    renderSection(cat);
   }
 
   function renderShots() {
@@ -641,8 +886,9 @@
   function loadDate(date) {
     document.getElementById("dateInput").value = date;
     document.getElementById("dayTitle").textContent = prettyDate(date);
-    getWorkout(date).then(function (rec) {
-      current = rec || emptyRecord(date);
+    Promise.all([getWorkout(date), computeLastSessions(date)]).then(function (results) {
+      current = results[0] || emptyRecord(date);
+      lastSessions = results[1];
       renderShots();
       renderSection("LIFTS");
       renderSection("PLYOS");
@@ -692,6 +938,160 @@
       });
     });
   }
+
+  // ---------------- Wheel picker sheet ----------------
+
+  var ITEM_H = 40;
+  var WHEEL_H = 150;
+  var sheetState = null; // { ex, mode, index, values }
+
+  function buildWheelColumn(field, value, onChange) {
+    var col = document.createElement("div");
+    col.className = "wheel-col";
+
+    var label = document.createElement("div");
+    label.className = "wheel-label";
+    label.textContent = field.label;
+    col.appendChild(label);
+
+    var scroller = document.createElement("div");
+    scroller.className = "wheel-scroll";
+    var inner = document.createElement("div");
+    var pad = (WHEEL_H - ITEM_H) / 2;
+    inner.style.paddingTop = pad + "px";
+    inner.style.paddingBottom = pad + "px";
+
+    var items = [];
+    for (var v = field.min; v <= field.max; v += field.step) items.push(v);
+
+    items.forEach(function (v) {
+      var it = document.createElement("div");
+      it.className = "wheel-item";
+      it.textContent = String(v);
+      inner.appendChild(it);
+    });
+    scroller.appendChild(inner);
+
+    var fadeTop = document.createElement("div");
+    fadeTop.className = "wheel-fade top";
+    var fadeBottom = document.createElement("div");
+    fadeBottom.className = "wheel-fade bottom";
+
+    col.appendChild(scroller);
+    col.appendChild(fadeTop);
+    col.appendChild(fadeBottom);
+
+    function highlight(idx) {
+      Array.prototype.forEach.call(inner.children, function (el, i) {
+        el.classList.toggle("active", i === idx);
+      });
+    }
+
+    var initIdx = items.indexOf(value);
+    if (initIdx < 0) {
+      initIdx = 0;
+      var best = Infinity;
+      items.forEach(function (v, i) {
+        var d = Math.abs(v - value);
+        if (d < best) { best = d; initIdx = i; }
+      });
+    }
+    requestAnimationFrame(function () {
+      scroller.scrollTop = initIdx * ITEM_H;
+      highlight(initIdx);
+    });
+
+    var scrollTimer = null;
+    scroller.addEventListener("scroll", function () {
+      clearTimeout(scrollTimer);
+      scrollTimer = setTimeout(function () {
+        var idx = Math.round(scroller.scrollTop / ITEM_H);
+        idx = Math.max(0, Math.min(items.length - 1, idx));
+        scroller.scrollTop = idx * ITEM_H;
+        highlight(idx);
+        onChange(items[idx]);
+      }, 90);
+    });
+
+    return col;
+  }
+
+  function openSheet(ex, mode, index) {
+    var list = current.exercises[ex.name] || [];
+    var values;
+    if (mode === "edit") {
+      values = Object.assign({}, list[index]);
+    } else if (list.length) {
+      values = Object.assign({}, list[list.length - 1]);
+    } else {
+      values = Object.assign({}, DEFAULTS[ex.type]);
+    }
+
+    sheetState = { ex: ex, mode: mode, index: index, values: values };
+
+    document.getElementById("sheetTitle").textContent = ex.name;
+    document.getElementById("sheetSubtitle").textContent =
+      "Set " + (mode === "edit" ? index + 1 : list.length + 1);
+    document.getElementById("sheetLast").textContent = lastSessionLine(ex);
+    document.getElementById("sheetSave").textContent = mode === "edit" ? "Save Changes" : "Add Set";
+    document.getElementById("sheetDelete").style.display = mode === "edit" ? "block" : "none";
+
+    var wheelsRow = document.getElementById("wheelsRow");
+    wheelsRow.innerHTML = '<div class="wheel-highlight"></div>';
+    FIELDS[ex.type].forEach(function (field) {
+      var col = buildWheelColumn(field, values[field.key], function (v) {
+        sheetState.values[field.key] = v;
+      });
+      wheelsRow.appendChild(col);
+    });
+
+    document.getElementById("sheetBackdrop").classList.add("open");
+    document.getElementById("sheet").classList.add("open");
+    document.body.classList.add("sheet-open");
+  }
+
+  function closeSheet() {
+    document.getElementById("sheetBackdrop").classList.remove("open");
+    document.getElementById("sheet").classList.remove("open");
+    document.body.classList.remove("sheet-open");
+    sheetState = null;
+  }
+
+  function onSheetSave() {
+    if (!sheetState) return;
+    var ex = sheetState.ex;
+    if (!current.exercises[ex.name]) current.exercises[ex.name] = [];
+    var list = current.exercises[ex.name];
+    var vals = Object.assign({}, sheetState.values);
+
+    if (sheetState.mode === "add") {
+      list.push(vals);
+      scheduleSave();
+      renderSection(activeCat);
+      openSheet(ex, "add", null); // stay open, ready for the next set
+    } else {
+      list[sheetState.index] = vals;
+      scheduleSave();
+      renderSection(activeCat);
+      closeSheet();
+    }
+  }
+
+  function onSheetDelete() {
+    if (!sheetState || sheetState.mode !== "edit") return;
+    var list = current.exercises[sheetState.ex.name];
+    list.splice(sheetState.index, 1);
+    scheduleSave();
+    renderSection(activeCat);
+    closeSheet();
+  }
+
+  document.getElementById("sheetSave").addEventListener("click", onSheetSave);
+  document.getElementById("sheetDelete").addEventListener("click", onSheetDelete);
+  document.getElementById("sheetClose").addEventListener("click", closeSheet);
+  document.getElementById("sheetBackdrop").addEventListener("click", closeSheet);
+
+  // ---------------- Wiring ----------------
 
   document.getElementById("dateInput").addEventListener("change", function (e) {
     loadDate(e.target.value);
