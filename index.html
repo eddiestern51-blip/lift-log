@@ -191,6 +191,20 @@
     font-size: 13px;
   }
 
+  .share-btn {
+    width: 100%;
+    background: var(--accent);
+    color: #0b1220;
+    border: none;
+    border-radius: 12px;
+    padding: 14px;
+    font-size: 15px;
+    font-weight: 700;
+    margin: 4px 0 14px;
+    min-height: 48px;
+  }
+  .share-btn:active { opacity: 0.85; }
+
   .summary-block {
     background: var(--card);
     border: 1px solid var(--border);
@@ -571,7 +585,10 @@
   <div class="section active" id="section-LIFTS"></div>
   <div class="section" id="section-PLYOS"></div>
   <div class="section" id="section-BODYWEIGHT"></div>
-  <div class="section" id="section-SUMMARY"></div>
+  <div class="section" id="section-SUMMARY">
+    <button class="share-btn" id="shareBtn">Share Workout</button>
+    <div id="summaryContent"></div>
+  </div>
 </main>
 
 <div class="bottom-nav">
@@ -894,7 +911,7 @@
   }
 
   function renderSummary() {
-    var container = document.getElementById("section-SUMMARY");
+    var container = document.getElementById("summaryContent");
     container.innerHTML = "";
     var any = false;
     Object.keys(EXERCISES).forEach(function (cat) {
@@ -933,6 +950,39 @@
     });
     if (!any) {
       container.innerHTML = '<div class="empty-hint">No sets logged for this day yet.</div>';
+    }
+  }
+
+  function buildSummaryText() {
+    var lines = ["Workout — " + prettyDate(current.date), ""];
+    var any = false;
+    Object.keys(EXERCISES).forEach(function (cat) {
+      var loggedExercises = EXERCISES[cat].filter(function (ex) {
+        var sets = current.exercises[ex.name];
+        return sets && sets.length;
+      });
+      if (!loggedExercises.length) return;
+      any = true;
+      lines.push(CAT_LABELS[cat].toUpperCase());
+      loggedExercises.forEach(function (ex) {
+        var sets = current.exercises[ex.name];
+        var detail = sets.map(function (s) { return formatSetCompact(ex.type, s); }).join(", ");
+        lines.push(ex.name + ": " + detail + UNIT_SUFFIX[ex.type]);
+      });
+      lines.push("");
+    });
+    if (!any) return "No sets logged for " + prettyDate(current.date) + ".";
+    return lines.join("\n").trim();
+  }
+
+  function shareWorkout() {
+    var text = buildSummaryText();
+    if (navigator.share) {
+      navigator.share({ title: "Workout " + current.date, text: text }).catch(function () {});
+    } else if (navigator.clipboard) {
+      navigator.clipboard.writeText(text).then(showToast);
+    } else {
+      window.prompt("Copy this workout summary:", text);
     }
   }
 
@@ -1205,6 +1255,7 @@
   document.getElementById("imgModal").addEventListener("click", function () {
     this.classList.remove("open");
   });
+  document.getElementById("shareBtn").addEventListener("click", shareWorkout);
   document.getElementById("historyBtn").addEventListener("click", function () {
     renderHistory();
     document.getElementById("historyPanel").classList.add("open");
