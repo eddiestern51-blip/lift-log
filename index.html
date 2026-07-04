@@ -675,12 +675,12 @@
     ],
     count_bw: [
       { key: "count", label: "Count", min: 0, max: 100, step: 1 },
-      { key: "bw", label: "% BW", min: 50, max: 200, step: 5 }
+      { key: "bw", label: "% BW", min: 50, max: 200, step: 5, suffix: "%" }
     ],
     time_bw: [
       { key: "min", label: "Min", min: 0, max: 30, step: 1 },
       { key: "sec", label: "Sec", min: 0, max: 59, step: 1 },
-      { key: "bw", label: "% BW", min: 50, max: 200, step: 5 }
+      { key: "bw", label: "% BW", min: 50, max: 200, step: 5, suffix: "%" }
     ]
   };
 
@@ -1125,7 +1125,7 @@
     items.forEach(function (v) {
       var it = document.createElement("div");
       it.className = "wheel-item";
-      it.textContent = String(v);
+      it.textContent = String(v) + (field.suffix || "");
       inner.appendChild(it);
     });
     scroller.appendChild(inner);
