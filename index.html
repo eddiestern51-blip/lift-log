@@ -210,6 +210,32 @@
   }
   .share-btn:active { opacity: 0.85; }
 
+  .debug-btn {
+    width: 100%;
+    background: transparent;
+    border: 1px dashed var(--border);
+    color: var(--muted);
+    border-radius: 10px;
+    padding: 10px;
+    font-size: 12px;
+    margin-top: 6px;
+  }
+  #debugDump {
+    background: #000;
+    color: #6fdc8c;
+    font-size: 11px;
+    line-height: 1.4;
+    padding: 10px;
+    border-radius: 10px;
+    margin-top: 8px;
+    white-space: pre-wrap;
+    word-break: break-word;
+    max-height: 50vh;
+    overflow-y: auto;
+    -webkit-user-select: text;
+    user-select: text;
+  }
+
   .summary-block {
     background: var(--card);
     border: 1px solid var(--border);
@@ -582,7 +608,7 @@
 
 <main>
   <h1 id="dayTitle">Workout</h1>
-  <div class="build-tag">v14</div>
+  <div class="build-tag">v15</div>
 
   <div class="shots-wrap">
     <div class="shots-title">Screenshots</div>
@@ -609,6 +635,8 @@
   <div class="section" id="section-SUMMARY">
     <button class="share-btn" id="shareBtn">Share Workout</button>
     <div id="summaryContent"></div>
+    <button class="debug-btn" id="debugBtn">Show Raw Data (debug)</button>
+    <pre id="debugDump" style="display:none;"></pre>
   </div>
 </main>
 
@@ -1354,6 +1382,15 @@
     this.classList.remove("open");
   });
   document.getElementById("shareBtn").addEventListener("click", shareWorkout);
+  document.getElementById("debugBtn").addEventListener("click", function () {
+    var dump = document.getElementById("debugDump");
+    var data = "date: " + current.date + "\n\n" + JSON.stringify(current.exercises, null, 2);
+    dump.textContent = data;
+    dump.style.display = dump.style.display === "none" ? "block" : "none";
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(data).catch(function () {});
+    }
+  });
   document.getElementById("historyBtn").addEventListener("click", function () {
     renderHistory();
     document.getElementById("historyPanel").classList.add("open");
