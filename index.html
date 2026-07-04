@@ -647,12 +647,12 @@
       { name: "Skater Lunge", type: "count" }
     ],
     BODYWEIGHT: [
-      { name: "Push Ups", type: "count" },
-      { name: "Pull Ups", type: "count" },
-      { name: "Dips", type: "count" },
-      { name: "Helicopters", type: "count" },
-      { name: "Plank Hold", type: "time" },
-      { name: "Wall Sit", type: "time" }
+      { name: "Push Ups", type: "count_bw" },
+      { name: "Pull Ups", type: "count_bw" },
+      { name: "Dips", type: "count_bw" },
+      { name: "Helicopters", type: "count_bw" },
+      { name: "Plank Hold", type: "time_bw" },
+      { name: "Wall Sit", type: "time_bw" }
     ]
   };
 
@@ -672,6 +672,15 @@
     ],
     count: [
       { key: "count", label: "Count", min: 0, max: 100, step: 1 }
+    ],
+    count_bw: [
+      { key: "count", label: "Count", min: 0, max: 100, step: 1 },
+      { key: "bw", label: "% BW", min: 50, max: 200, step: 5 }
+    ],
+    time_bw: [
+      { key: "min", label: "Min", min: 0, max: 30, step: 1 },
+      { key: "sec", label: "Sec", min: 0, max: 59, step: 1 },
+      { key: "bw", label: "% BW", min: 50, max: 200, step: 5 }
     ]
   };
 
@@ -679,7 +688,9 @@
     reps_weight: { reps: 8, weight: 45 },
     reps_height: { reps: 5, height: 24 },
     time: { min: 1, sec: 0 },
-    count: { count: 10 }
+    count: { count: 10 },
+    count_bw: { count: 10, bw: 100 },
+    time_bw: { min: 1, sec: 0, bw: 100 }
   };
 
   var CAT_LABELS = {
@@ -692,7 +703,9 @@
     reps_weight: " lb",
     reps_height: " in",
     time: " min",
-    count: " reps"
+    count: " reps",
+    count_bw: " reps",
+    time_bw: " min"
   };
 
   var db = null;
@@ -780,10 +793,19 @@
     setTimeout(function () { t.classList.remove("show"); }, 700);
   }
 
+  // Bodyweight % only gets called out when it isn't plain bodyweight (100%),
+  // so old sets logged before this field existed still read cleanly.
+  function bwTag(s, compact) {
+    if (s.bw === undefined || s.bw === null || s.bw === 100) return "";
+    return compact ? ("@" + s.bw + "%") : (" @ " + s.bw + "% BW");
+  }
+
   function formatSet(type, s) {
     if (type === "reps_weight") return s.reps + " reps × " + s.weight + " lb";
     if (type === "reps_height") return s.reps + " reps × " + s.height + " in";
     if (type === "time") return (s.min || 0) + ":" + pad(s.sec || 0) + " min";
+    if (type === "count_bw") return s.count + " reps" + bwTag(s);
+    if (type === "time_bw") return (s.min || 0) + ":" + pad(s.sec || 0) + " min" + bwTag(s);
     return s.count + " reps";
   }
 
@@ -791,6 +813,8 @@
     if (type === "reps_weight") return s.reps + "×" + s.weight;
     if (type === "reps_height") return s.reps + "×" + s.height;
     if (type === "time") return (s.min || 0) + ":" + pad(s.sec || 0);
+    if (type === "count_bw") return s.count + bwTag(s, true);
+    if (type === "time_bw") return (s.min || 0) + ":" + pad(s.sec || 0) + bwTag(s, true);
     return String(s.count);
   }
 
