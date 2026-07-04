@@ -86,12 +86,12 @@
   .tab {
     flex: 1;
     text-align: center;
-    padding: 12px 4px;
+    padding: 12px 2px;
     border-radius: 10px;
     background: var(--card);
     border: 1px solid var(--border);
     color: var(--muted);
-    font-size: 12.5px;
+    font-size: 11px;
     font-weight: 700;
     letter-spacing: 0.4px;
   }
@@ -579,13 +579,15 @@
   <div class="tabs">
     <div class="tab active" data-cat="LIFTS">LIFTS</div>
     <div class="tab" data-cat="PLYOS">PLYOS</div>
-    <div class="tab" data-cat="BODYWEIGHT">BODY / ISO</div>
+    <div class="tab" data-cat="BODYWEIGHT">BODY/ISO</div>
+    <div class="tab" data-cat="RUN">RUN</div>
     <div class="tab" data-cat="SUMMARY">SUMMARY</div>
   </div>
 
   <div class="section active" id="section-LIFTS"></div>
   <div class="section" id="section-PLYOS"></div>
   <div class="section" id="section-BODYWEIGHT"></div>
+  <div class="section" id="section-RUN"></div>
   <div class="section" id="section-SUMMARY">
     <button class="share-btn" id="shareBtn">Share Workout</button>
     <div id="summaryContent"></div>
@@ -654,6 +656,11 @@
       { name: "Helicopters", type: "count_bw" },
       { name: "Plank Hold", type: "time_bw" },
       { name: "Wall Sit", type: "time_bw" }
+    ],
+    RUN: [
+      { name: "Run Hard", type: "time_distance" },
+      { name: "Run Easy", type: "time_distance" },
+      { name: "Incline Jog", type: "time_distance" }
     ]
   };
 
@@ -682,6 +689,10 @@
       { key: "min", label: "Min", min: 0, max: 30, step: 1 },
       { key: "sec", label: "Sec", min: 0, max: 59, step: 1 },
       { key: "bw", label: "% BW", min: 50, max: 200, step: 5, suffix: "%" }
+    ],
+    time_distance: [
+      { key: "min", label: "Min", min: 0, max: 180, step: 1 },
+      { key: "miles", label: "Miles", min: 0, max: 26, step: 0.25 }
     ]
   };
 
@@ -691,13 +702,15 @@
     time: { min: 1, sec: 0 },
     count: { count: 10 },
     count_bw: { count: 10, bw: 100 },
-    time_bw: { min: 1, sec: 0, bw: 100 }
+    time_bw: { min: 1, sec: 0, bw: 100 },
+    time_distance: { min: 30, miles: 3 }
   };
 
   var CAT_LABELS = {
     LIFTS: "Lifts",
     PLYOS: "Plyos",
-    BODYWEIGHT: "Bodyweight / Iso"
+    BODYWEIGHT: "Bodyweight / Iso",
+    RUN: "Run"
   };
 
   var UNIT_SUFFIX = {
@@ -706,7 +719,8 @@
     time: " min",
     count: " reps",
     count_bw: " reps",
-    time_bw: " min"
+    time_bw: " min",
+    time_distance: ""
   };
 
   var db = null;
@@ -807,6 +821,7 @@
     if (type === "time") return (s.min || 0) + ":" + pad(s.sec || 0) + " min";
     if (type === "count_bw") return s.count + " reps" + bwTag(s);
     if (type === "time_bw") return (s.min || 0) + ":" + pad(s.sec || 0) + " min" + bwTag(s);
+    if (type === "time_distance") return (s.min || 0) + " min · " + s.miles + " mi";
     return s.count + " reps";
   }
 
@@ -816,6 +831,7 @@
     if (type === "time") return (s.min || 0) + ":" + pad(s.sec || 0);
     if (type === "count_bw") return s.count + bwTag(s, true);
     if (type === "time_bw") return (s.min || 0) + ":" + pad(s.sec || 0) + bwTag(s, true);
+    if (type === "time_distance") return s.miles + "mi/" + (s.min || 0) + "min";
     return String(s.count);
   }
 
@@ -861,6 +877,7 @@
     var container = document.getElementById("section-" + cat);
     container.innerHTML = "";
     EXERCISES[cat].forEach(function (ex) {
+     try {
       var card = document.createElement("div");
       card.className = "exercise-card";
 
@@ -900,6 +917,9 @@
       }
 
       container.appendChild(card);
+     } catch (err) {
+       console.error("Failed to render exercise card for", ex.name, err);
+     }
     });
   }
 
@@ -955,6 +975,7 @@
       block.appendChild(title);
 
       loggedExercises.forEach(function (ex) {
+       try {
         var sets = current.exercises[ex.name];
         var row = document.createElement("div");
         row.className = "summary-ex-row";
@@ -969,6 +990,9 @@
         row.appendChild(name);
         row.appendChild(detail);
         block.appendChild(row);
+       } catch (err) {
+         console.error("Failed to render summary row for", ex.name, err);
+       }
       });
 
       container.appendChild(block);
@@ -990,9 +1014,14 @@
       any = true;
       lines.push(CAT_LABELS[cat].toUpperCase());
       loggedExercises.forEach(function (ex) {
+       try {
         var sets = current.exercises[ex.name];
         var detail = sets.map(function (s) { return formatSetCompact(ex.type, s); }).join(", ");
         lines.push(ex.name + ": " + detail + UNIT_SUFFIX[ex.type]);
+       } catch (err) {
+         console.error("Failed to build summary text for", ex.name, err);
+         lines.push(ex.name + ": (error displaying — check console)");
+       }
       });
       lines.push("");
     });
@@ -1050,6 +1079,7 @@
       renderSection("LIFTS");
       renderSection("PLYOS");
       renderSection("BODYWEIGHT");
+      renderSection("RUN");
       renderSummary();
     });
   }
