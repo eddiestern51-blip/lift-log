@@ -971,11 +971,20 @@
     return row;
   }
 
+  function errorRow(label, err) {
+    var row = document.createElement("div");
+    row.className = "summary-ex-row";
+    row.style.color = "var(--danger)";
+    row.textContent = "⚠ " + label + ": " + (err && err.message ? err.message : err);
+    return row;
+  }
+
   function renderSummary() {
     var container = document.getElementById("summaryContent");
     container.innerHTML = "";
     var any = false;
     Object.keys(EXERCISES).forEach(function (cat) {
+     try {
       var loggedExercises = EXERCISES[cat].filter(function (ex) {
         var sets = current.exercises[ex.name];
         return sets && sets.length;
@@ -1008,10 +1017,15 @@
         block.appendChild(row);
        } catch (err) {
          console.error("Failed to render summary row for", ex.name, err);
+         block.appendChild(errorRow(ex.name, err));
        }
       });
 
       container.appendChild(block);
+     } catch (err) {
+       console.error("Failed to render summary category", cat, err);
+       container.appendChild(errorRow(cat, err));
+     }
     });
     if (!any) {
       container.innerHTML = '<div class="empty-hint">No sets logged for this day yet.</div>';
