@@ -191,6 +191,35 @@
     font-size: 13px;
   }
 
+  .summary-block {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    margin-bottom: 12px;
+    overflow: hidden;
+  }
+  .summary-cat-title {
+    padding: 10px 14px;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    color: var(--accent);
+    background: var(--card2);
+  }
+  .summary-ex-row {
+    padding: 9px 14px;
+    border-top: 1px solid var(--border);
+  }
+  .summary-ex-name {
+    font-size: 13.5px;
+    font-weight: 700;
+    margin-bottom: 2px;
+  }
+  .summary-ex-sets {
+    font-size: 13.5px;
+    color: var(--text);
+  }
+
   .shots-wrap {
     margin: 10px 0 16px;
   }
@@ -535,12 +564,14 @@
   <div class="tabs">
     <div class="tab active" data-cat="LIFTS">LIFTS</div>
     <div class="tab" data-cat="PLYOS">PLYOS</div>
-    <div class="tab" data-cat="BODYWEIGHT">BODYWEIGHT / ISO</div>
+    <div class="tab" data-cat="BODYWEIGHT">BODY / ISO</div>
+    <div class="tab" data-cat="SUMMARY">SUMMARY</div>
   </div>
 
   <div class="section active" id="section-LIFTS"></div>
   <div class="section" id="section-PLYOS"></div>
   <div class="section" id="section-BODYWEIGHT"></div>
+  <div class="section" id="section-SUMMARY"></div>
 </main>
 
 <div class="bottom-nav">
@@ -632,6 +663,12 @@
     reps_height: { reps: 5, height: 24 },
     time: { min: 1, sec: 0 },
     count: { count: 10 }
+  };
+
+  var CAT_LABELS = {
+    LIFTS: "Lifts",
+    PLYOS: "Plyos",
+    BODYWEIGHT: "Bodyweight / Iso"
   };
 
   var UNIT_SUFFIX = {
@@ -849,10 +886,54 @@
       current.exercises[ex.name].splice(idx, 1);
       scheduleSave();
       renderSection(activeCat);
+      renderSummary();
     });
     row.appendChild(del);
 
     return row;
+  }
+
+  function renderSummary() {
+    var container = document.getElementById("section-SUMMARY");
+    container.innerHTML = "";
+    var any = false;
+    Object.keys(EXERCISES).forEach(function (cat) {
+      var loggedExercises = EXERCISES[cat].filter(function (ex) {
+        var sets = current.exercises[ex.name];
+        return sets && sets.length;
+      });
+      if (!loggedExercises.length) return;
+      any = true;
+
+      var block = document.createElement("div");
+      block.className = "summary-block";
+      var title = document.createElement("div");
+      title.className = "summary-cat-title";
+      title.textContent = CAT_LABELS[cat];
+      block.appendChild(title);
+
+      loggedExercises.forEach(function (ex) {
+        var sets = current.exercises[ex.name];
+        var row = document.createElement("div");
+        row.className = "summary-ex-row";
+        var name = document.createElement("div");
+        name.className = "summary-ex-name";
+        name.textContent = ex.name;
+        var detail = document.createElement("div");
+        detail.className = "summary-ex-sets";
+        detail.textContent = sets.map(function (s) {
+          return formatSetCompact(ex.type, s);
+        }).join("   ·   ") + UNIT_SUFFIX[ex.type];
+        row.appendChild(name);
+        row.appendChild(detail);
+        block.appendChild(row);
+      });
+
+      container.appendChild(block);
+    });
+    if (!any) {
+      container.innerHTML = '<div class="empty-hint">No sets logged for this day yet.</div>';
+    }
   }
 
   function renderShots() {
@@ -894,6 +975,7 @@
       renderSection("LIFTS");
       renderSection("PLYOS");
       renderSection("BODYWEIGHT");
+      renderSummary();
     });
   }
 
@@ -931,6 +1013,7 @@
         goBtn.textContent = "Open";
         goBtn.addEventListener("click", function () {
           loadDate(rec.date);
+          switchTab("SUMMARY");
           document.getElementById("historyPanel").classList.remove("open");
         });
         item.appendChild(left);
@@ -1069,11 +1152,13 @@
       list.push(vals);
       scheduleSave();
       renderSection(activeCat);
+      renderSummary();
       openSheet(ex, "add", null); // stay open, ready for the next set
     } else {
       list[sheetState.index] = vals;
       scheduleSave();
       renderSection(activeCat);
+      renderSummary();
       closeSheet();
     }
   }
@@ -1084,6 +1169,7 @@
     list.splice(sheetState.index, 1);
     scheduleSave();
     renderSection(activeCat);
+    renderSummary();
     closeSheet();
   }
 
