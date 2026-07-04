@@ -1,0 +1,736 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+<title>Lift Log</title>
+<style>
+  :root {
+    --bg: #121316;
+    --card: #1c1e23;
+    --card2: #24272e;
+    --border: #33363d;
+    --text: #eef0f3;
+    --muted: #9096a2;
+    --accent: #5aa9ff;
+    --accent2: #ffb454;
+    --danger: #ff6b6b;
+    --good: #4cd97b;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    padding-bottom: 90px;
+  }
+  header {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    background: var(--bg);
+    border-bottom: 1px solid var(--border);
+    padding: 10px 12px;
+  }
+  .date-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .date-row input[type=date] {
+    flex: 1;
+    background: var(--card);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 10px;
+    font-size: 16px;
+  }
+  .icon-btn {
+    background: var(--card);
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-radius: 10px;
+    width: 42px;
+    height: 42px;
+    font-size: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .icon-btn:active { background: var(--card2); }
+  h1 {
+    font-size: 18px;
+    margin: 8px 0 10px 2px;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+  }
+  .tabs {
+    position: sticky;
+    top: 62px;
+    z-index: 19;
+    display: flex;
+    gap: 6px;
+    background: var(--bg);
+    padding: 4px 0 8px;
+  }
+  .tab {
+    flex: 1;
+    text-align: center;
+    padding: 10px 4px;
+    border-radius: 10px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    color: var(--muted);
+    font-size: 12.5px;
+    font-weight: 700;
+    letter-spacing: 0.4px;
+  }
+  .tab.active {
+    background: var(--accent);
+    color: #0b1220;
+    border-color: var(--accent);
+  }
+  main { padding: 0 12px; max-width: 640px; margin: 0 auto; }
+  .section { display: none; }
+  .section.active { display: block; }
+
+  .exercise-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    margin-bottom: 12px;
+    overflow: hidden;
+  }
+  .exercise-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 14px;
+  }
+  .exercise-name {
+    font-weight: 700;
+    font-size: 15px;
+  }
+  .add-set-btn {
+    background: var(--accent);
+    color: #0b1220;
+    border: none;
+    border-radius: 8px;
+    padding: 8px 12px;
+    font-weight: 700;
+    font-size: 13px;
+  }
+  .add-set-btn:active { opacity: 0.8; }
+
+  .set-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 14px;
+    border-top: 1px solid var(--border);
+  }
+  .set-num {
+    width: 22px;
+    color: var(--muted);
+    font-size: 13px;
+    font-weight: 700;
+    flex-shrink: 0;
+  }
+  .field {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .field label {
+    font-size: 10px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+  }
+  .field input {
+    width: 100%;
+    background: var(--card2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-radius: 8px;
+    padding: 8px 6px;
+    font-size: 15px;
+    text-align: center;
+  }
+  .field input:focus { outline: none; border-color: var(--accent); }
+  .del-set {
+    flex-shrink: 0;
+    width: 30px;
+    height: 30px;
+    border-radius: 8px;
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--danger);
+    font-size: 16px;
+    line-height: 1;
+  }
+  .empty-hint {
+    padding: 10px 14px 14px;
+    color: var(--muted);
+    font-size: 13px;
+  }
+
+  .shots-wrap {
+    margin: 10px 0 16px;
+  }
+  .shots-title {
+    font-size: 12px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 6px;
+  }
+  .shots-grid {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .shot-thumb {
+    position: relative;
+    width: 64px;
+    height: 64px;
+    border-radius: 10px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+  }
+  .shot-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+  .shot-thumb .x {
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    background: rgba(0,0,0,0.6);
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    width: 18px;
+    height: 18px;
+    font-size: 11px;
+    line-height: 1;
+  }
+  .add-shot {
+    width: 64px;
+    height: 64px;
+    border-radius: 10px;
+    border: 1px dashed var(--border);
+    background: var(--card);
+    color: var(--muted);
+    font-size: 22px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .add-shot input { display: none; }
+
+  .modal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.9);
+    z-index: 100;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+  .modal.open { display: flex; }
+  .modal img { max-width: 100%; max-height: 100%; border-radius: 8px; }
+
+  .bottom-nav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: var(--card);
+    border-top: 1px solid var(--border);
+    display: flex;
+    padding: 8px 12px calc(8px + env(safe-area-inset-bottom));
+    gap: 8px;
+    z-index: 20;
+  }
+  .bottom-nav button {
+    flex: 1;
+    background: var(--card2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-radius: 10px;
+    padding: 10px;
+    font-size: 13px;
+    font-weight: 600;
+  }
+  .bottom-nav button.primary {
+    background: var(--accent);
+    color: #0b1220;
+    border-color: var(--accent);
+  }
+
+  .history-panel {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: var(--bg);
+    z-index: 50;
+    padding: 12px;
+    overflow-y: auto;
+  }
+  .history-panel.open { display: block; }
+  .history-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+  }
+  .history-item {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 12px 14px;
+    margin-bottom: 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .history-item .d {
+    font-weight: 700;
+    font-size: 15px;
+  }
+  .history-item .meta {
+    font-size: 12px;
+    color: var(--muted);
+    margin-top: 2px;
+  }
+  .go-btn {
+    background: var(--accent);
+    color: #0b1220;
+    border: none;
+    border-radius: 8px;
+    padding: 8px 12px;
+    font-weight: 700;
+    font-size: 13px;
+  }
+  .close-btn {
+    background: var(--card2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-radius: 10px;
+    padding: 8px 14px;
+    font-weight: 600;
+  }
+  .toast {
+    position: fixed;
+    bottom: 76px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--good);
+    color: #0b1220;
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 700;
+    opacity: 0;
+    transition: opacity 0.25s;
+    pointer-events: none;
+    z-index: 200;
+  }
+  .toast.show { opacity: 1; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="date-row">
+    <button class="icon-btn" id="prevDay">&#8592;</button>
+    <input type="date" id="dateInput">
+    <button class="icon-btn" id="nextDay">&#8594;</button>
+  </div>
+</header>
+
+<main>
+  <h1 id="dayTitle">Workout</h1>
+
+  <div class="shots-wrap">
+    <div class="shots-title">Screenshots</div>
+    <div class="shots-grid" id="shotsGrid">
+      <label class="add-shot">
+        +
+        <input type="file" id="shotInput" accept="image/*" multiple>
+      </label>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <div class="tab active" data-cat="LIFTS">LIFTS</div>
+    <div class="tab" data-cat="PLYOS">PLYOS</div>
+    <div class="tab" data-cat="BODYWEIGHT">BODYWEIGHT / ISO</div>
+  </div>
+
+  <div class="section active" id="section-LIFTS"></div>
+  <div class="section" id="section-PLYOS"></div>
+  <div class="section" id="section-BODYWEIGHT"></div>
+</main>
+
+<div class="bottom-nav">
+  <button id="historyBtn">History</button>
+</div>
+
+<div class="modal" id="imgModal"><img id="modalImg" src=""></div>
+
+<div class="history-panel" id="historyPanel">
+  <div class="history-header">
+    <h1 style="margin:0;">History</h1>
+    <button class="close-btn" id="closeHistory">Close</button>
+  </div>
+  <div id="historyList"></div>
+</div>
+
+<div class="toast" id="toast">Saved</div>
+
+<script>
+(function () {
+  "use strict";
+
+  var EXERCISES = {
+    LIFTS: [
+      { name: "RDL", type: "reps_weight" },
+      { name: "ATG Squat", type: "reps_weight" },
+      { name: "Push Press", type: "reps_weight" },
+      { name: "Bulgarian Split Squat", type: "reps_weight" },
+      { name: "SLRDL", type: "reps_weight" },
+      { name: "Leg Extensions", type: "reps_weight" },
+      { name: "Calf Raise", type: "reps_weight" }
+    ],
+    PLYOS: [
+      { name: "Jump Rope", type: "time" },
+      { name: "Box Jump", type: "reps_height" },
+      { name: "Depth Jump", type: "reps_height" },
+      { name: "Single Leg Reactive Hops", type: "count" },
+      { name: "Skater Lunge", type: "count" }
+    ],
+    BODYWEIGHT: [
+      { name: "Push Ups", type: "count" },
+      { name: "Dips", type: "count" },
+      { name: "Helicopters", type: "count" },
+      { name: "Plank Hold", type: "time" },
+      { name: "Wall Sit", type: "time" }
+    ]
+  };
+
+  var FIELDS = {
+    reps_weight: [ { key: "reps", label: "Reps" }, { key: "weight", label: "Weight (lb)" } ],
+    reps_height: [ { key: "reps", label: "Reps" }, { key: "height", label: "Height (in)" } ],
+    time: [ { key: "min", label: "Min" }, { key: "sec", label: "Sec" } ],
+    count: [ { key: "count", label: "Count" } ]
+  };
+
+  var db = null;
+  var current = null; // in-memory record for the selected date
+  var activeCat = "LIFTS";
+
+  function pad(n) { return n < 10 ? "0" + n : "" + n; }
+  function todayStr() {
+    var d = new Date();
+    return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate());
+  }
+  function shiftDate(str, delta) {
+    var parts = str.split("-").map(Number);
+    var d = new Date(parts[0], parts[1] - 1, parts[2]);
+    d.setDate(d.getDate() + delta);
+    return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate());
+  }
+  function prettyDate(str) {
+    var parts = str.split("-").map(Number);
+    var d = new Date(parts[0], parts[1] - 1, parts[2]);
+    return d.toLocaleDateString(undefined, { weekday: "long", month: "short", day: "numeric", year: "numeric" });
+  }
+
+  function openDB() {
+    return new Promise(function (resolve, reject) {
+      var req = indexedDB.open("liftTrackerDB", 1);
+      req.onupgradeneeded = function (e) {
+        var _db = e.target.result;
+        if (!_db.objectStoreNames.contains("workouts")) {
+          _db.createObjectStore("workouts", { keyPath: "date" });
+        }
+      };
+      req.onsuccess = function (e) { resolve(e.target.result); };
+      req.onerror = function (e) { reject(e); };
+    });
+  }
+
+  function getWorkout(date) {
+    return new Promise(function (resolve, reject) {
+      var tx = db.transaction("workouts", "readonly");
+      var store = tx.objectStore("workouts");
+      var req = store.get(date);
+      req.onsuccess = function () { resolve(req.result || null); };
+      req.onerror = function (e) { reject(e); };
+    });
+  }
+
+  function putWorkout(record) {
+    return new Promise(function (resolve, reject) {
+      var tx = db.transaction("workouts", "readwrite");
+      var store = tx.objectStore("workouts");
+      var req = store.put(record);
+      req.onsuccess = function () { resolve(); };
+      req.onerror = function (e) { reject(e); };
+    });
+  }
+
+  function getAllWorkouts() {
+    return new Promise(function (resolve, reject) {
+      var tx = db.transaction("workouts", "readonly");
+      var store = tx.objectStore("workouts");
+      var req = store.getAll();
+      req.onsuccess = function () { resolve(req.result || []); };
+      req.onerror = function (e) { reject(e); };
+    });
+  }
+
+  function emptyRecord(date) {
+    return { date: date, exercises: {}, screenshots: [] };
+  }
+
+  var saveTimer = null;
+  function scheduleSave() {
+    if (!current) return;
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(function () {
+      putWorkout(current).then(showToast);
+    }, 150);
+  }
+
+  function showToast() {
+    var t = document.getElementById("toast");
+    t.classList.add("show");
+    setTimeout(function () { t.classList.remove("show"); }, 700);
+  }
+
+  function fieldValue(setObj, key) {
+    var v = setObj[key];
+    return (v === undefined || v === null) ? "" : v;
+  }
+
+  function renderSection(cat) {
+    var container = document.getElementById("section-" + cat);
+    container.innerHTML = "";
+    EXERCISES[cat].forEach(function (ex) {
+      var card = document.createElement("div");
+      card.className = "exercise-card";
+
+      var head = document.createElement("div");
+      head.className = "exercise-head";
+      var nameEl = document.createElement("div");
+      nameEl.className = "exercise-name";
+      nameEl.textContent = ex.name;
+      var addBtn = document.createElement("button");
+      addBtn.className = "add-set-btn";
+      addBtn.textContent = "+ Add Set";
+      addBtn.addEventListener("click", function () { addSet(cat, ex); });
+      head.appendChild(nameEl);
+      head.appendChild(addBtn);
+      card.appendChild(head);
+
+      var sets = (current.exercises[ex.name] || []);
+      if (sets.length === 0) {
+        var hint = document.createElement("div");
+        hint.className = "empty-hint";
+        hint.textContent = "No sets logged yet.";
+        card.appendChild(hint);
+      } else {
+        sets.forEach(function (setObj, idx) {
+          card.appendChild(renderSetRow(ex, setObj, idx));
+        });
+      }
+
+      container.appendChild(card);
+    });
+  }
+
+  function renderSetRow(ex, setObj, idx) {
+    var row = document.createElement("div");
+    row.className = "set-row";
+
+    var num = document.createElement("div");
+    num.className = "set-num";
+    num.textContent = "#" + (idx + 1);
+    row.appendChild(num);
+
+    FIELDS[ex.type].forEach(function (f) {
+      var field = document.createElement("div");
+      field.className = "field";
+      var label = document.createElement("label");
+      label.textContent = f.label;
+      var input = document.createElement("input");
+      input.type = "number";
+      input.inputMode = "decimal";
+      input.min = "0";
+      input.value = fieldValue(setObj, f.key);
+      input.addEventListener("input", function () {
+        var val = input.value === "" ? "" : Number(input.value);
+        current.exercises[ex.name][idx][f.key] = val;
+        scheduleSave();
+      });
+      field.appendChild(label);
+      field.appendChild(input);
+      row.appendChild(field);
+    });
+
+    var del = document.createElement("button");
+    del.className = "del-set";
+    del.textContent = "✕";
+    del.addEventListener("click", function () {
+      current.exercises[ex.name].splice(idx, 1);
+      scheduleSave();
+      renderSection(activeCat);
+    });
+    row.appendChild(del);
+
+    return row;
+  }
+
+  function addSet(cat, ex) {
+    if (!current.exercises[ex.name]) current.exercises[ex.name] = [];
+    var blank = {};
+    FIELDS[ex.type].forEach(function (f) { blank[f.key] = ""; });
+    current.exercises[ex.name].push(blank);
+    scheduleSave();
+    renderSection(cat);
+  }
+
+  function renderShots() {
+    var grid = document.getElementById("shotsGrid");
+    var addLabel = grid.querySelector(".add-shot");
+    grid.innerHTML = "";
+    (current.screenshots || []).forEach(function (shot, idx) {
+      var thumb = document.createElement("div");
+      thumb.className = "shot-thumb";
+      var img = document.createElement("img");
+      img.src = URL.createObjectURL(shot.blob);
+      img.addEventListener("click", function () {
+        document.getElementById("modalImg").src = img.src;
+        document.getElementById("imgModal").classList.add("open");
+      });
+      var x = document.createElement("button");
+      x.className = "x";
+      x.textContent = "✕";
+      x.addEventListener("click", function (e) {
+        e.stopPropagation();
+        current.screenshots.splice(idx, 1);
+        scheduleSave();
+        renderShots();
+      });
+      thumb.appendChild(img);
+      thumb.appendChild(x);
+      grid.appendChild(thumb);
+    });
+    grid.appendChild(addLabel);
+  }
+
+  function loadDate(date) {
+    document.getElementById("dateInput").value = date;
+    document.getElementById("dayTitle").textContent = prettyDate(date);
+    getWorkout(date).then(function (rec) {
+      current = rec || emptyRecord(date);
+      renderShots();
+      renderSection("LIFTS");
+      renderSection("PLYOS");
+      renderSection("BODYWEIGHT");
+    });
+  }
+
+  function switchTab(cat) {
+    activeCat = cat;
+    document.querySelectorAll(".tab").forEach(function (t) {
+      t.classList.toggle("active", t.dataset.cat === cat);
+    });
+    document.querySelectorAll(".section").forEach(function (s) {
+      s.classList.toggle("active", s.id === "section-" + cat);
+    });
+  }
+
+  function renderHistory() {
+    getAllWorkouts().then(function (all) {
+      all.sort(function (a, b) { return a.date < b.date ? 1 : -1; });
+      var list = document.getElementById("historyList");
+      list.innerHTML = "";
+      if (all.length === 0) {
+        list.innerHTML = '<div style="color:var(--muted);">No workouts logged yet.</div>';
+        return;
+      }
+      all.forEach(function (rec) {
+        var setCount = 0;
+        Object.keys(rec.exercises || {}).forEach(function (k) { setCount += rec.exercises[k].length; });
+        var item = document.createElement("div");
+        item.className = "history-item";
+        var left = document.createElement("div");
+        left.innerHTML = '<div class="d">' + prettyDate(rec.date) + '</div>' +
+          '<div class="meta">' + setCount + ' sets logged' +
+          (rec.screenshots && rec.screenshots.length ? " &middot; " + rec.screenshots.length + " photo(s)" : "") +
+          '</div>';
+        var goBtn = document.createElement("button");
+        goBtn.className = "go-btn";
+        goBtn.textContent = "Open";
+        goBtn.addEventListener("click", function () {
+          loadDate(rec.date);
+          document.getElementById("historyPanel").classList.remove("open");
+        });
+        item.appendChild(left);
+        item.appendChild(goBtn);
+        list.appendChild(item);
+      });
+    });
+  }
+
+  document.getElementById("dateInput").addEventListener("change", function (e) {
+    loadDate(e.target.value);
+  });
+  document.getElementById("prevDay").addEventListener("click", function () {
+    loadDate(shiftDate(current.date, -1));
+  });
+  document.getElementById("nextDay").addEventListener("click", function () {
+    loadDate(shiftDate(current.date, 1));
+  });
+  document.querySelectorAll(".tab").forEach(function (t) {
+    t.addEventListener("click", function () { switchTab(t.dataset.cat); });
+  });
+  document.getElementById("shotInput").addEventListener("change", function (e) {
+    var files = Array.from(e.target.files || []);
+    if (!current.screenshots) current.screenshots = [];
+    files.forEach(function (file) {
+      current.screenshots.push({ blob: file, name: file.name });
+    });
+    scheduleSave();
+    renderShots();
+    e.target.value = "";
+  });
+  document.getElementById("imgModal").addEventListener("click", function () {
+    this.classList.remove("open");
+  });
+  document.getElementById("historyBtn").addEventListener("click", function () {
+    renderHistory();
+    document.getElementById("historyPanel").classList.add("open");
+  });
+  document.getElementById("closeHistory").addEventListener("click", function () {
+    document.getElementById("historyPanel").classList.remove("open");
+  });
+
+  openDB().then(function (_db) {
+    db = _db;
+    loadDate(todayStr());
+  });
+})();
+</script>
+</body>
+</html>
