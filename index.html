@@ -479,7 +479,9 @@
     display: flex;
     flex-direction: column;
     align-items: center;
+    min-width: 0;
   }
+  .wheel-col-wide { flex: 1.8; }
   .wheel-label {
     font-size: 10.5px;
     color: var(--muted);
@@ -505,10 +507,20 @@
     color: var(--muted);
     scroll-snap-align: center;
   }
+  .wheel-item-text {
+    font-size: 14.5px;
+    padding: 0 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
   .wheel-item.active {
     color: var(--text);
     font-weight: 700;
     font-size: 23px;
+  }
+  .wheel-item-text.active {
+    font-size: 16.5px;
   }
   .wheel-fade {
     position: absolute;
@@ -658,11 +670,14 @@
       { name: "Wall Sit", type: "time_bw" }
     ],
     RUN: [
-      { name: "Run Hard", type: "time_distance" },
-      { name: "Run Easy", type: "time_distance" },
-      { name: "Incline Jog", type: "time_distance" }
+      { name: "Run", type: "run" }
     ]
   };
+
+  var RUN_TYPES = [
+    "Easy Run", "Recovery Run", "Long Run", "Threshold Run",
+    "Speedwork", "Incline Jog", "Incline Walk"
+  ];
 
   // Each field carries its wheel range so the sheet can build a scroll wheel for it.
   var FIELDS = {
@@ -690,9 +705,10 @@
       { key: "sec", label: "Sec", min: 0, max: 59, step: 1 },
       { key: "bw", label: "% BW", min: 50, max: 200, step: 5, suffix: "%" }
     ],
-    time_distance: [
-      { key: "min", label: "Min", min: 0, max: 180, step: 1 },
-      { key: "miles", label: "Miles", min: 0, max: 26, step: 0.25 }
+    run: [
+      { key: "runType", label: "Type", options: RUN_TYPES },
+      { key: "min", label: "Mins", min: 0, max: 180, step: 1, suffix: " mins" },
+      { key: "miles", label: "Miles", min: 0, max: 26, step: 0.25, suffix: " miles" }
     ]
   };
 
@@ -703,7 +719,7 @@
     count: { count: 10 },
     count_bw: { count: 10, bw: 100 },
     time_bw: { min: 1, sec: 0, bw: 100 },
-    time_distance: { min: 30, miles: 3 }
+    run: { runType: RUN_TYPES[0], min: 30, miles: 3 }
   };
 
   var CAT_LABELS = {
@@ -720,7 +736,7 @@
     count: " reps",
     count_bw: " reps",
     time_bw: " min",
-    time_distance: ""
+    run: ""
   };
 
   var db = null;
@@ -821,7 +837,7 @@
     if (type === "time") return (s.min || 0) + ":" + pad(s.sec || 0) + " min";
     if (type === "count_bw") return s.count + " reps" + bwTag(s);
     if (type === "time_bw") return (s.min || 0) + ":" + pad(s.sec || 0) + " min" + bwTag(s);
-    if (type === "time_distance") return (s.min || 0) + " min · " + s.miles + " mi";
+    if (type === "run") return s.runType + " — " + (s.min || 0) + " mins, " + s.miles + " miles";
     return s.count + " reps";
   }
 
@@ -831,7 +847,7 @@
     if (type === "time") return (s.min || 0) + ":" + pad(s.sec || 0);
     if (type === "count_bw") return s.count + bwTag(s, true);
     if (type === "time_bw") return (s.min || 0) + ":" + pad(s.sec || 0) + bwTag(s, true);
-    if (type === "time_distance") return s.miles + "mi/" + (s.min || 0) + "min";
+    if (type === "run") return s.runType + " " + (s.min || 0) + "min/" + s.miles + "mi";
     return String(s.count);
   }
 
@@ -1136,7 +1152,7 @@
 
   function buildWheelColumn(field, value, onChange) {
     var col = document.createElement("div");
-    col.className = "wheel-col";
+    col.className = "wheel-col" + (field.options ? " wheel-col-wide" : "");
 
     var label = document.createElement("div");
     label.className = "wheel-label";
@@ -1150,13 +1166,15 @@
     inner.style.paddingTop = pad + "px";
     inner.style.paddingBottom = pad + "px";
 
-    var items = [];
-    for (var v = field.min; v <= field.max; v += field.step) items.push(v);
+    var items = field.options ? field.options.slice() : [];
+    if (!field.options) {
+      for (var v = field.min; v <= field.max; v += field.step) items.push(v);
+    }
 
     items.forEach(function (v) {
       var it = document.createElement("div");
-      it.className = "wheel-item";
-      it.textContent = String(v) + (field.suffix || "");
+      it.className = "wheel-item" + (field.options ? " wheel-item-text" : "");
+      it.textContent = field.options ? String(v) : (String(v) + (field.suffix || ""));
       inner.appendChild(it);
     });
     scroller.appendChild(inner);
@@ -1177,13 +1195,15 @@
     }
 
     var initIdx = items.indexOf(value);
-    if (initIdx < 0) {
+    if (initIdx < 0 && !field.options) {
       initIdx = 0;
       var best = Infinity;
       items.forEach(function (v, i) {
         var d = Math.abs(v - value);
         if (d < best) { best = d; initIdx = i; }
       });
+    } else if (initIdx < 0) {
+      initIdx = 0;
     }
     requestAnimationFrame(function () {
       scroller.scrollTop = initIdx * ITEM_H;
