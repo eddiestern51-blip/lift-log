@@ -608,7 +608,7 @@
 
 <main>
   <h1 id="dayTitle">Workout</h1>
-  <div class="build-tag">v15</div>
+  <div class="build-tag">v16</div>
 
   <div class="shots-wrap">
     <div class="shots-title">Screenshots</div>
@@ -1403,6 +1403,10 @@
     db = _db;
     loadDate(todayStr());
   });
+
+  if ("serviceWorker" in navigator) {
+    navigator.serviceWorker.register("sw.js").catch(function () {});
+  }
 })();
 </script>
 </body>
