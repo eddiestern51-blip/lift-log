@@ -608,7 +608,7 @@
 
 <main>
   <h1 id="dayTitle">Workout</h1>
-  <div class="build-tag">v21</div>
+  <div class="build-tag">v22</div>
 
   <div class="shots-wrap">
     <div class="shots-title">Screenshots</div>
@@ -713,7 +713,8 @@
       { name: "Bar Hang", type: "secs_bw" }
     ],
     RUN: [
-      { name: "Run", type: "run" }
+      { name: "Run", type: "run" },
+      { name: "Sideways/Backwards Jog", type: "mins_mins" }
     ]
   };
 
@@ -766,6 +767,10 @@
     reps_secs30: [
       { key: "reps", label: "Reps", min: 0, max: 50, step: 1 },
       { key: "sec", label: "Secs", min: 0, max: 300, step: 30 }
+    ],
+    mins_mins: [
+      { key: "sideways", label: "Sideways", min: 0, max: 60, step: 1 },
+      { key: "backwards", label: "Backwards", min: 0, max: 60, step: 1 }
     ]
   };
 
@@ -780,7 +785,8 @@
     mins: { min: 20 },
     secs: { sec: 30 },
     secs_bw: { sec: 30, bw: 100 },
-    reps_secs30: { reps: 3, sec: 30 }
+    reps_secs30: { reps: 3, sec: 30 },
+    mins_mins: { sideways: 5, backwards: 5 }
   };
 
   var CAT_LABELS = {
@@ -801,7 +807,8 @@
     mins: " min",
     secs: " sec",
     secs_bw: " sec",
-    reps_secs30: ""
+    reps_secs30: "",
+    mins_mins: " min"
   };
 
   var db = null;
@@ -907,6 +914,7 @@
     if (type === "secs") return (s.sec || 0) + " sec";
     if (type === "secs_bw") return (s.sec || 0) + " sec" + bwTag(s);
     if (type === "reps_secs30") return s.reps + " x " + (s.sec || 0) + " sec";
+    if (type === "mins_mins") return (s.sideways || 0) + "/" + (s.backwards || 0) + " min";
     return s.count + " reps";
   }
 
@@ -921,6 +929,7 @@
     if (type === "secs") return String(s.sec || 0);
     if (type === "secs_bw") return (s.sec || 0) + bwTag(s, true);
     if (type === "reps_secs30") return s.reps + "x" + (s.sec || 0) + "s";
+    if (type === "mins_mins") return (s.sideways || 0) + "/" + (s.backwards || 0);
     return String(s.count);
   }
 
