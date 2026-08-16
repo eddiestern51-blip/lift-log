@@ -1,4 +1,4 @@
-var CACHE_NAME = "lift-log-v20";
+var CACHE_NAME = "lift-log-v21";
 var APP_SHELL = ["./index.html"];
 
 self.addEventListener("install", function (event) {
