@@ -210,6 +210,33 @@
   }
   .share-btn:active { opacity: 0.85; }
 
+  .seg-wrap {
+    display: flex;
+    gap: 6px;
+    margin: 4px 0 10px;
+  }
+  .seg {
+    flex: 1;
+    background: var(--card);
+    color: var(--muted);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 10px;
+    font-size: 14px;
+    font-weight: 700;
+    min-height: 44px;
+  }
+  .seg.active {
+    background: var(--card2);
+    color: var(--accent);
+    border-color: var(--accent);
+  }
+  .week-head {
+    padding: 2px 2px 10px;
+    font-size: 13px;
+    color: var(--muted);
+  }
+
   .debug-btn {
     width: 100%;
     background: transparent;
@@ -608,7 +635,7 @@
 
 <main>
   <h1 id="dayTitle">Workout</h1>
-  <div class="build-tag">v23</div>
+  <div class="build-tag">v24</div>
 
   <div class="shots-wrap">
     <div class="shots-title">Screenshots</div>
@@ -633,6 +660,10 @@
   <div class="section" id="section-BODYWEIGHT"></div>
   <div class="section" id="section-RUN"></div>
   <div class="section" id="section-SUMMARY">
+    <div class="seg-wrap">
+      <button class="seg active" id="segDay">This Day</button>
+      <button class="seg" id="segWeek">This Week</button>
+    </div>
     <button class="share-btn" id="shareBtn">Share Workout</button>
     <div id="summaryContent"></div>
     <button class="debug-btn" id="debugBtn">Show Raw Data (debug)</button>
@@ -686,6 +717,7 @@
       { name: "Tempo Squat", type: "reps_weight" },
       { name: "Bounce Squat", type: "reps_weight" },
       { name: "Push Press", type: "reps_weight" },
+      { name: "Shoulder Sequence", type: "reps_weight" },
       { name: "Bulgarian Split Squat", type: "reps_weight" },
       { name: "SLRDL", type: "reps_weight" },
       { name: "Leg Extensions", type: "reps_weight" },
@@ -833,6 +865,26 @@
     var parts = str.split("-").map(Number);
     var d = new Date(parts[0], parts[1] - 1, parts[2]);
     return d.toLocaleDateString(undefined, { weekday: "long", month: "short", day: "numeric", year: "numeric" });
+  }
+  function shortDate(str) {
+    var parts = str.split("-").map(Number);
+    var d = new Date(parts[0], parts[1] - 1, parts[2]);
+    return d.toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" });
+  }
+  function monthDay(str) {
+    var parts = str.split("-").map(Number);
+    var d = new Date(parts[0], parts[1] - 1, parts[2]);
+    return d.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+  }
+  // Monday-start week containing the given date.
+  function weekBounds(str) {
+    var parts = str.split("-").map(Number);
+    var d = new Date(parts[0], parts[1] - 1, parts[2]);
+    var start = shiftDate(str, (d.getDay() + 6) % 7 * -1);
+    return { start: start, end: shiftDate(start, 6) };
+  }
+  function weekLabel(b) {
+    return "Week of " + monthDay(b.start) + " \u2013 " + monthDay(b.end) + ", " + b.end.split("-")[0];
   }
 
   function openDB() {
@@ -1063,7 +1115,15 @@
     return row;
   }
 
+  var summaryRange = "day"; // "day" | "week"
+  var weekShareText = "";   // cached so Share can stay inside the user gesture
+
   function renderSummary() {
+    if (summaryRange === "week") renderWeekSummary();
+    else renderDaySummary();
+  }
+
+  function renderDaySummary() {
     var container = document.getElementById("summaryContent");
     container.innerHTML = "";
     var any = false;
@@ -1116,6 +1176,114 @@
     }
   }
 
+  function countSets(rec) {
+    var n = 0;
+    Object.keys(rec.exercises || {}).forEach(function (k) { n += (rec.exercises[k] || []).length; });
+    return n;
+  }
+
+  // Every logged day in the selected date's week, oldest first. The selected day
+  // comes from the in-memory record so a set logged seconds ago is included.
+  function weekRecords() {
+    var b = weekBounds(current.date);
+    return getAllWorkouts().then(function (all) {
+      var recs = all.filter(function (r) {
+        return r.date >= b.start && r.date <= b.end && r.date !== current.date;
+      });
+      if (current.date >= b.start && current.date <= b.end) recs.push(current);
+      return recs.filter(function (r) { return countSets(r) > 0; })
+        .sort(function (x, y) { return x.date < y.date ? -1 : 1; });
+    });
+  }
+
+  function eachLoggedExercise(rec, fn) {
+    Object.keys(EXERCISES).forEach(function (cat) {
+      EXERCISES[cat].forEach(function (ex) {
+        var sets = (rec.exercises || {})[ex.name];
+        if (sets && sets.length) fn(ex, sets);
+      });
+    });
+  }
+
+  function renderWeekSummary() {
+    var container = document.getElementById("summaryContent");
+    container.innerHTML = '<div class="empty-hint">Loading week...</div>';
+    var b = weekBounds(current.date);
+    weekRecords().then(function (recs) {
+      weekShareText = buildWeekText(recs, b);
+      container.innerHTML = "";
+      var head = document.createElement("div");
+      head.className = "week-head";
+      head.textContent = weekLabel(b) + "  \u00b7  " + recs.length + (recs.length === 1 ? " session" : " sessions");
+      container.appendChild(head);
+      if (!recs.length) {
+        var hint = document.createElement("div");
+        hint.className = "empty-hint";
+        hint.textContent = "No sets logged this week yet.";
+        container.appendChild(hint);
+        return;
+      }
+      recs.forEach(function (rec) {
+       try {
+        var block = document.createElement("div");
+        block.className = "summary-block";
+        var title = document.createElement("div");
+        title.className = "summary-cat-title";
+        title.textContent = shortDate(rec.date);
+        block.appendChild(title);
+        eachLoggedExercise(rec, function (ex, sets) {
+         try {
+          var row = document.createElement("div");
+          row.className = "summary-ex-row";
+          var name = document.createElement("div");
+          name.className = "summary-ex-name";
+          name.textContent = ex.name;
+          var detail = document.createElement("div");
+          detail.className = "summary-ex-sets";
+          detail.textContent = sets.map(function (s) {
+            return formatSetCompact(ex.type, s);
+          }).join("   \u00b7   ") + UNIT_SUFFIX[ex.type];
+          row.appendChild(name);
+          row.appendChild(detail);
+          block.appendChild(row);
+         } catch (err) {
+           console.error("Failed to render week row for", ex.name, err);
+           block.appendChild(errorRow(ex.name, err));
+         }
+        });
+        container.appendChild(block);
+       } catch (err) {
+         console.error("Failed to render week day", rec.date, err);
+         container.appendChild(errorRow(rec.date, err));
+       }
+      });
+    }).catch(function (err) {
+      console.error("Failed to build week summary", err);
+      container.innerHTML = "";
+      container.appendChild(errorRow("Week summary", err));
+    });
+  }
+
+  function buildWeekText(recs, b) {
+    if (!recs.length) return weekLabel(b) + "\nNo sets logged this week.";
+    var lines = [weekLabel(b), recs.length + (recs.length === 1 ? " session" : " sessions"), ""];
+    recs.forEach(function (rec) {
+      lines.push(shortDate(rec.date).toUpperCase());
+      eachLoggedExercise(rec, function (ex, sets) {
+       try {
+        lines.push(ex.name + ": " + sets.map(function (s) {
+          return formatSetCompact(ex.type, s);
+        }).join(", ") + UNIT_SUFFIX[ex.type]);
+       } catch (err) {
+         console.error("Failed to build week text for", ex.name, err);
+         lines.push(ex.name + ": (error displaying \u2014 check console)");
+       }
+      });
+      lines.push("");
+    });
+    return lines.join("\n").trim();
+  }
+
   function buildSummaryText() {
     var lines = ["Workout — " + prettyDate(current.date), ""];
     var any = false;
@@ -1144,14 +1312,27 @@
   }
 
   function shareWorkout() {
-    var text = buildSummaryText();
+    var b = weekBounds(current.date);
+    var week = summaryRange === "week";
+    // Week text is built when the week renders, so sharing stays synchronous —
+    // iOS only allows navigator.share straight out of a tap.
+    var text = week ? (weekShareText || buildWeekText([], b)) : buildSummaryText();
+    var title = week ? ("Workouts " + b.start + " to " + b.end) : ("Workout " + current.date);
     if (navigator.share) {
-      navigator.share({ title: "Workout " + current.date, text: text }).catch(function () {});
+      navigator.share({ title: title, text: text }).catch(function () {});
     } else if (navigator.clipboard) {
       navigator.clipboard.writeText(text).then(showToast);
     } else {
-      window.prompt("Copy this workout summary:", text);
+      window.prompt("Copy this summary:", text);
     }
+  }
+
+  function setSummaryRange(range) {
+    summaryRange = range;
+    document.getElementById("segDay").classList.toggle("active", range === "day");
+    document.getElementById("segWeek").classList.toggle("active", range === "week");
+    document.getElementById("shareBtn").textContent = range === "week" ? "Share Week" : "Share Workout";
+    renderSummary();
   }
 
   function renderShots() {
@@ -1432,6 +1613,8 @@
     this.classList.remove("open");
   });
   document.getElementById("shareBtn").addEventListener("click", shareWorkout);
+  document.getElementById("segDay").addEventListener("click", function () { setSummaryRange("day"); });
+  document.getElementById("segWeek").addEventListener("click", function () { setSummaryRange("week"); });
   document.getElementById("debugBtn").addEventListener("click", function () {
     var dump = document.getElementById("debugDump");
     var data = "date: " + current.date + "\n\n" + JSON.stringify(current.exercises, null, 2);
