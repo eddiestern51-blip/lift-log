@@ -23,7 +23,11 @@
     --good: #4cd97b;
   }
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-  html, body { height: 100%; overscroll-behavior-y: none; }
+  html { height: 100%; overscroll-behavior-y: none; }
+  /* min-height, not height: a fixed-height body keeps its bottom padding
+     inside the viewport box, so long lists ran under the History bar and
+     the last exercise card was unreachable. */
+  body { min-height: 100%; overscroll-behavior-y: none; }
   body {
     margin: 0;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
@@ -635,7 +639,7 @@
 
 <main>
   <h1 id="dayTitle">Workout</h1>
-  <div class="build-tag">v25</div>
+  <div class="build-tag">v26</div>
 
   <div class="shots-wrap">
     <div class="shots-title">Screenshots</div>
