@@ -635,7 +635,7 @@
 
 <main>
   <h1 id="dayTitle">Workout</h1>
-  <div class="build-tag">v24</div>
+  <div class="build-tag">v25</div>
 
   <div class="shots-wrap">
     <div class="shots-title">Screenshots</div>
@@ -649,7 +649,7 @@
 
   <div class="tabs">
     <div class="tab active" data-cat="LIFTS">LIFTS</div>
-    <div class="tab" data-cat="PLYOS">PLYOS</div>
+    <div class="tab" data-cat="PLYOS">PLYO/PWR</div>
     <div class="tab" data-cat="BODYWEIGHT">BODY/ISO</div>
     <div class="tab" data-cat="RUN">RUN</div>
     <div class="tab" data-cat="SUMMARY">SUMMARY</div>
@@ -728,8 +728,10 @@
       { name: "Jump Rope", type: "time" },
       { name: "Box Jump", type: "reps_height" },
       { name: "Depth Jump", type: "reps_height" },
+      { name: "Squat Jumps", type: "count_bw" },
       { name: "Single Leg Reactive Hops", type: "count" },
-      { name: "Skater Lunge", type: "count" }
+      { name: "Skater Lunge", type: "count" },
+      { name: "Press/Pump/Jerk/Lunge Sequence", type: "reps_weight" }
     ],
     BODYWEIGHT: [
       { name: "Push Ups", type: "count_bw" },
@@ -825,7 +827,7 @@
 
   var CAT_LABELS = {
     LIFTS: "Lifts",
-    PLYOS: "Plyos",
+    PLYOS: "Plyos / Power",
     BODYWEIGHT: "Bodyweight / Iso",
     RUN: "Run"
   };
