@@ -639,7 +639,7 @@
 
 <main>
   <h1 id="dayTitle">Workout</h1>
-  <div class="build-tag">v26</div>
+  <div class="build-tag">v27</div>
 
   <div class="shots-wrap">
     <div class="shots-title">Screenshots</div>
@@ -716,7 +716,8 @@
   var EXERCISES = {
     LIFTS: [
       { name: "RDL", type: "reps_weight" },
-      { name: "ATG Squat", type: "reps_weight" },
+      { name: "Rack Pull", type: "reps_weight" },
+      { name: "Back Squat", type: "reps_weight" },
       { name: "Front Bar Squat", type: "reps_weight" },
       { name: "Tempo Squat", type: "reps_weight" },
       { name: "Bounce Squat", type: "reps_weight" },
@@ -934,6 +935,31 @@
       var req = store.getAll();
       req.onsuccess = function () { resolve(req.result || []); };
       req.onerror = function (e) { reject(e); };
+    });
+  }
+
+  // Sets are keyed by exercise name, so renaming one would hide every set
+  // logged under the old name. Move them across instead, once, on startup.
+  var RENAMES = { "ATG Squat": "Back Squat" };
+
+  function migrateNames() {
+    return getAllWorkouts().then(function (all) {
+      var writes = [];
+      all.forEach(function (rec) {
+        var moved = false;
+        Object.keys(RENAMES).forEach(function (oldName) {
+          var sets = (rec.exercises || {})[oldName];
+          if (!sets || !sets.length) return;
+          var newName = RENAMES[oldName];
+          rec.exercises[newName] = (rec.exercises[newName] || []).concat(sets);
+          delete rec.exercises[oldName];
+          moved = true;
+        });
+        if (moved) writes.push(putWorkout(rec));
+      });
+      return Promise.all(writes);
+    }).catch(function (err) {
+      console.error("Name migration failed", err);
     });
   }
 
@@ -1640,6 +1666,8 @@
 
   openDB().then(function (_db) {
     db = _db;
+    return migrateNames();
+  }).then(function () {
     loadDate(todayStr());
   });
 
