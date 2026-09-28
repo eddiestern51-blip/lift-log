@@ -639,7 +639,7 @@
 
 <main>
   <h1 id="dayTitle">Workout</h1>
-  <div class="build-tag">v27</div>
+  <div class="build-tag">v28</div>
 
   <div class="shots-wrap">
     <div class="shots-title">Screenshots</div>
@@ -1626,7 +1626,16 @@
     loadDate(shiftDate(current.date, 1));
   });
   document.getElementById("reloadBtn").addEventListener("click", function () {
-    window.location.reload();
+    // A plain reload can be answered from the HTTP cache, which is why a new
+    // build could sit unseen for ten minutes. Check for a new worker and pull a
+    // no-store copy of the shell, then reload into it.
+    var go = function () { window.location.reload(); };
+    if (!navigator.serviceWorker || !navigator.serviceWorker.getRegistration) { go(); return; }
+    navigator.serviceWorker.getRegistration()
+      .then(function (reg) { return reg ? reg.update() : null; })
+      .then(function () { return fetch("./index.html", { cache: "no-store" }); })
+      .catch(function () {})
+      .then(go, go);
   });
   document.querySelectorAll(".tab").forEach(function (t) {
     t.addEventListener("click", function () { switchTab(t.dataset.cat); });
@@ -1672,7 +1681,7 @@
   });
 
   if ("serviceWorker" in navigator) {
-    navigator.serviceWorker.register("sw.js").catch(function () {});
+    navigator.serviceWorker.register("sw.js", { updateViaCache: "none" }).catch(function () {});
   }
 })();
 </script>
