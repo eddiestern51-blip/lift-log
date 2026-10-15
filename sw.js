@@ -1,4 +1,4 @@
-var CACHE_NAME = "lift-log-v29";
+var CACHE_NAME = "lift-log-v30";
 var APP_SHELL = ["./index.html"];
 
 // GitHub Pages serves the app shell with Cache-Control: max-age=600. Anything
