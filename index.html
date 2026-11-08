@@ -639,7 +639,7 @@
 
 <main>
   <h1 id="dayTitle">Workout</h1>
-  <div class="build-tag">v30</div>
+  <div class="build-tag">v32</div>
 
   <div class="shots-wrap">
     <div class="shots-title">Screenshots</div>
@@ -721,13 +721,20 @@
       { name: "Front Bar Squat", type: "reps_weight" },
       { name: "Tempo Squat", type: "reps_weight" },
       { name: "Bounce Squat", type: "reps_weight" },
+      { name: "Pause Squat", type: "reps_weight" },
       { name: "Push Press", type: "reps_weight" },
       { name: "Shoulder Sequence", type: "reps_weight" },
+      { name: "Pullovers", type: "reps_weight" },
       { name: "Bulgarian Split Squat", type: "reps_weight" },
       { name: "SLRDL", type: "reps_weight" },
       { name: "Leg Extensions", type: "reps_weight" },
       { name: "Calf Raise", type: "reps_weight" },
-      { name: "Dumbbell Warmup Sequence", type: "reps_weight" }
+      { name: "Dumbbell Warmup Sequence", type: "reps_weight" },
+      { name: "KB Work", type: "mins_weight" },
+      { name: "KB Swing", type: "reps_weight" },
+      { name: "KB Goblet Squat", type: "reps_weight" },
+      { name: "KB Snatch", type: "reps_weight" },
+      { name: "KB Clean & Press", type: "reps_weight" }
     ],
     PLYOS: [
       { name: "Jump Rope", type: "time" },
@@ -744,6 +751,9 @@
       { name: "Diamond Push Ups", type: "count_bw" },
       { name: "Pull Ups", type: "count_bw" },
       { name: "Dips", type: "count_bw" },
+      { name: "Rings Pull Ups", type: "count_bw" },
+      { name: "Rings Push Ups", type: "count_bw" },
+      { name: "Ring Dips", type: "count_bw" },
       { name: "Back Hyper/Roman Chair", type: "count_bw" },
       { name: "Helicopters", type: "reps_secs30" },
       { name: "Plank Hold", type: "time_bw" },
@@ -818,6 +828,10 @@
       { key: "sets", label: "Sets", min: 0, max: 20, step: 1 },
       { key: "reps", label: "Reps", min: 0, max: 50, step: 1 }
     ],
+    mins_weight: [
+      { key: "min", label: "Mins", min: 0, max: 120, step: 1 },
+      { key: "weight", label: "Weight (lb)", min: 0, max: 150, step: 5 }
+    ],
     mins_mins: [
       { key: "sideways", label: "Sideways", min: 0, max: 60, step: 1 },
       { key: "backwards", label: "Backwards", min: 0, max: 60, step: 1 }
@@ -841,6 +855,7 @@
     secs_bw: { sec: 30, bw: 100 },
     reps_secs30: { reps: 3, sec: 30 },
     sets_reps: { sets: 4, reps: 10 },
+    mins_weight: { min: 10, weight: 35 },
     mins_mins: { sideways: 5, backwards: 5 },
     cardio: { intensity: INTENSITIES[1], min: 45 }
   };
@@ -865,6 +880,7 @@
     secs_bw: " sec",
     reps_secs30: "",
     sets_reps: "",
+    mins_weight: " lb",
     mins_mins: " min",
     cardio: ""
   };
@@ -1018,6 +1034,7 @@
     if (type === "secs_bw") return (s.sec || 0) + " sec" + bwTag(s);
     if (type === "reps_secs30") return s.reps + " x " + (s.sec || 0) + " sec";
     if (type === "sets_reps") return s.sets + " sets \u00d7 " + s.reps + " reps";
+    if (type === "mins_weight") return (s.min || 0) + " min \u00d7 " + s.weight + " lb";
     if (type === "mins_mins") return (s.sideways || 0) + "/" + (s.backwards || 0) + " min";
     if (type === "cardio") return s.intensity + " \u2014 " + (s.min || 0) + " mins";
     return s.count + " reps";
@@ -1035,6 +1052,7 @@
     if (type === "secs_bw") return (s.sec || 0) + bwTag(s, true);
     if (type === "reps_secs30") return s.reps + "x" + (s.sec || 0) + "s";
     if (type === "sets_reps") return s.sets + " sets\u00d7" + s.reps;
+    if (type === "mins_weight") return (s.min || 0) + "min\u00d7" + s.weight;
     if (type === "mins_mins") return (s.sideways || 0) + "/" + (s.backwards || 0);
     if (type === "cardio") return s.intensity + " " + (s.min || 0) + "min";
     return String(s.count);
@@ -1235,6 +1253,15 @@
     return n;
   }
 
+  // Sets saved under an exercise that no longer exists (a rename without a
+  // migration) still sit in the record but cannot be shown, so they must not
+  // turn a rest day into an empty session block.
+  function hasShowableSets(rec) {
+    var n = 0;
+    eachLoggedExercise(rec, function () { n++; });
+    return n > 0;
+  }
+
   // Every logged day in the selected date's week, oldest first. The selected day
   // comes from the in-memory record so a set logged seconds ago is included.
   function weekRecords() {
@@ -1244,7 +1271,7 @@
         return r.date >= b.start && r.date <= b.end && r.date !== current.date;
       });
       if (current.date >= b.start && current.date <= b.end) recs.push(current);
-      return recs.filter(function (r) { return countSets(r) > 0; })
+      return recs.filter(hasShowableSets)
         .sort(function (x, y) { return x.date < y.date ? -1 : 1; });
     });
   }
