@@ -639,7 +639,7 @@
 
 <main>
   <h1 id="dayTitle">Workout</h1>
-  <div class="build-tag">v32</div>
+  <div class="build-tag">v33</div>
 
   <div class="shots-wrap">
     <div class="shots-title">Screenshots</div>
@@ -733,7 +733,8 @@
       { name: "KB Work", type: "mins_weight" },
       { name: "KB Swing", type: "reps_weight" },
       { name: "KB Goblet Squat", type: "reps_weight" },
-      { name: "KB Snatch", type: "reps_weight" },
+      { name: "KB Snatch", type: "reps_weight80" },
+      { name: "KB Reverse Lunge Sequence", type: "reps_weight80" },
       { name: "KB Clean & Press", type: "reps_weight" }
     ],
     PLYOS: [
@@ -754,7 +755,10 @@
       { name: "Rings Pull Ups", type: "count_bw" },
       { name: "Rings Push Ups", type: "count_bw" },
       { name: "Ring Dips", type: "count_bw" },
+      { name: "Ring Biceps", type: "count" },
+      { name: "Ring Triceps", type: "count" },
       { name: "Back Hyper/Roman Chair", type: "count_bw" },
+      { name: "Cossacks", type: "reps_weight" },
       { name: "Helicopters", type: "reps_secs30" },
       { name: "Plank Hold", type: "time_bw" },
       { name: "Wall Sit", type: "time_bw" },
@@ -784,6 +788,10 @@
     reps_weight: [
       { key: "reps", label: "Reps", min: 0, max: 50, step: 1 },
       { key: "weight", label: "Weight (lb)", min: 0, max: 500, step: 5 }
+    ],
+    reps_weight80: [
+      { key: "reps", label: "Reps", min: 0, max: 50, step: 1 },
+      { key: "weight", label: "Weight (lb)", min: 0, max: 80, step: 5 }
     ],
     reps_height: [
       { key: "reps", label: "Reps", min: 0, max: 50, step: 1 },
@@ -844,6 +852,7 @@
 
   var DEFAULTS = {
     reps_weight: { reps: 8, weight: 45 },
+    reps_weight80: { reps: 8, weight: 35 },
     reps_height: { reps: 5, height: 24 },
     time: { min: 1, sec: 0 },
     count: { count: 10 },
@@ -869,6 +878,7 @@
 
   var UNIT_SUFFIX = {
     reps_weight: " lb",
+    reps_weight80: " lb",
     reps_height: " in",
     time: " min",
     count: " reps",
@@ -1023,7 +1033,7 @@
   }
 
   function formatSet(type, s) {
-    if (type === "reps_weight") return s.reps + " reps × " + s.weight + " lb";
+    if (type === "reps_weight" || type === "reps_weight80") return s.reps + " reps × " + s.weight + " lb";
     if (type === "reps_height") return s.reps + " reps × " + s.height + " in";
     if (type === "time") return (s.min || 0) + ":" + pad(s.sec || 0) + " min";
     if (type === "count_bw") return s.count + " reps" + bwTag(s);
@@ -1041,7 +1051,7 @@
   }
 
   function formatSetCompact(type, s) {
-    if (type === "reps_weight") return s.reps + "×" + s.weight;
+    if (type === "reps_weight" || type === "reps_weight80") return s.reps + "×" + s.weight;
     if (type === "reps_height") return s.reps + "×" + s.height;
     if (type === "time") return (s.min || 0) + ":" + pad(s.sec || 0);
     if (type === "count_bw") return s.count + bwTag(s, true);
